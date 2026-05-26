@@ -19,11 +19,9 @@ with open("static/styles.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 # ------------------------------------------------
-# Load Model & Encoders
+# Load Model
 # ------------------------------------------------
 model = pickle.load(open("models/DecisionTree_Classifier.pkl", "rb"))
-
-encoders = pickle.load(open("models/label_encoders.pkl", "rb"))
 
 # ------------------------------------------------
 # Title
@@ -36,8 +34,8 @@ st.markdown(
 st.markdown(
     """
     <div class='info-box'>
-    Predict whether the mushroom is edible or poisonous using
-    Decision Tree Classification with GridSearchCV 🚀
+    Predict whether the mushroom is edible or poisonous
+    using Decision Tree Classification 🚀
     </div>
     """,
     unsafe_allow_html=True
@@ -55,53 +53,53 @@ st.sidebar.success("Hyperparameter Tuning : GridSearchCV")
 st.sidebar.success("Dataset : Mushroom Classification")
 
 # ------------------------------------------------
-# Feature Dictionaries
+# Encoding Dictionaries
 # ------------------------------------------------
 
 cap_shape_dict = {
-    "Bell": "b",
-    "Conical": "c",
-    "Convex": "x",
-    "Flat": "f",
-    "Knobbed": "k",
-    "Sunken": "s"
+    "Bell": 0,
+    "Conical": 1,
+    "Convex": 5,
+    "Flat": 2,
+    "Knobbed": 3,
+    "Sunken": 4
 }
 
 cap_surface_dict = {
-    "Fibrous": "f",
-    "Grooves": "g",
-    "Scaly": "y",
-    "Smooth": "s"
+    "Fibrous": 0,
+    "Grooves": 1,
+    "Scaly": 3,
+    "Smooth": 2
 }
 
 cap_color_dict = {
-    "Brown": "n",
-    "Buff": "b",
-    "Cinnamon": "c",
-    "Gray": "g",
-    "Green": "r",
-    "Pink": "p",
-    "Purple": "u",
-    "Red": "e",
-    "White": "w",
-    "Yellow": "y"
+    "Brown": 4,
+    "Buff": 0,
+    "Cinnamon": 1,
+    "Gray": 3,
+    "Green": 2,
+    "Pink": 5,
+    "Purple": 6,
+    "Red": 7,
+    "White": 8,
+    "Yellow": 9
 }
 
 bruises_dict = {
-    "Bruises Present": "t",
-    "No Bruises": "f"
+    "Bruises Present": 1,
+    "No Bruises": 0
 }
 
 odor_dict = {
-    "Almond": "a",
-    "Anise": "l",
-    "Creosote": "c",
-    "Fishy": "y",
-    "Foul": "f",
-    "Musty": "m",
-    "No Odor": "n",
-    "Pungent": "p",
-    "Spicy": "s"
+    "Almond": 0,
+    "Anise": 1,
+    "Creosote": 2,
+    "Fishy": 3,
+    "Foul": 4,
+    "Musty": 5,
+    "No Odor": 6,
+    "Pungent": 7,
+    "Spicy": 8
 }
 
 # ------------------------------------------------
@@ -144,62 +142,34 @@ with col3:
     )
 
 # ------------------------------------------------
-# Convert Inputs to Dataset Codes
-# ------------------------------------------------
-
-cap_shape_value = cap_shape_dict[cap_shape]
-
-cap_surface_value = cap_surface_dict[cap_surface]
-
-cap_color_value = cap_color_dict[cap_color]
-
-bruises_value = bruises_dict[bruises]
-
-odor_value = odor_dict[odor]
-
-# ------------------------------------------------
 # Prediction
 # ------------------------------------------------
 
 if st.button("🎯 Predict Mushroom Type"):
 
-    # Create Input DataFrame
+    # Create Input Data
 
-    input_df = pd.DataFrame({
-        "cap-shape": [cap_shape_value],
-        "cap-surface": [cap_surface_value],
-        "cap-color": [cap_color_value],
-        "bruises": [bruises_value],
-        "odor": [odor_value]
-    })
+    input_data = np.array([
+        [
+            cap_shape_dict[cap_shape],
+            cap_surface_dict[cap_surface],
+            cap_color_dict[cap_color],
+            bruises_dict[bruises],
+            odor_dict[odor]
+        ]
+    ])
 
-    # --------------------------------------------
-    # Label Encoding
-    # --------------------------------------------
-
-    for col in input_df.columns:
-
-        value = input_df[col].iloc[0]
-
-        encoded_value = encoders[col].transform([value])[0]
-
-        input_df[col] = encoded_value
-
-    # --------------------------------------------
     # Prediction
-    # --------------------------------------------
 
-    prediction = model.predict(input_df)
+    prediction = model.predict(input_data)
 
-    prediction_proba = model.predict_proba(input_df)
+    probability = model.predict_proba(input_data)
 
-    edible_prob = prediction_proba[0][0] * 100
+    edible_prob = probability[0][0] * 100
 
-    poisonous_prob = prediction_proba[0][1] * 100
+    poisonous_prob = probability[0][1] * 100
 
-    # --------------------------------------------
-    # Display Result
-    # --------------------------------------------
+    # Result
 
     if prediction[0] == 1:
 
@@ -207,7 +177,7 @@ if st.button("🎯 Predict Mushroom Type"):
 
         message = "⚠️ This mushroom is poisonous. Do NOT consume it."
 
-        probability = poisonous_prob
+        confidence = poisonous_prob
 
     else:
 
@@ -215,7 +185,9 @@ if st.button("🎯 Predict Mushroom Type"):
 
         message = "🍽️ This mushroom is edible."
 
-        probability = edible_prob
+        confidence = edible_prob
+
+    # Display Result
 
     st.markdown(
         f"""
@@ -224,14 +196,14 @@ if st.button("🎯 Predict Mushroom Type"):
             <br><br>
             <span>{message}</span>
             <br><br>
-            Prediction Confidence : {probability:.2f}%
+            Prediction Confidence : {confidence:.2f}%
         </div>
         """,
         unsafe_allow_html=True
     )
 
 # ------------------------------------------------
-# Feature Information Section
+# Feature Information
 # ------------------------------------------------
 
 st.markdown("---")
