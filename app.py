@@ -4,7 +4,7 @@ import numpy as np
 import pickle
 
 # ------------------------------------------------
-# Page Config
+# Page Configuration
 # ------------------------------------------------
 st.set_page_config(
     page_title="Mushroom Classification",
@@ -36,11 +36,23 @@ st.markdown(
 st.markdown(
     """
     <div class='info-box'>
-    Predict whether the mushroom is edible or poisonous using Decision Tree Classification 🚀
+    Predict whether the mushroom is edible or poisonous using
+    Decision Tree Classification with GridSearchCV 🚀
     </div>
     """,
     unsafe_allow_html=True
 )
+
+# ------------------------------------------------
+# Sidebar
+# ------------------------------------------------
+st.sidebar.header("⚙️ Model Information")
+
+st.sidebar.success("Algorithm : Decision Tree Classifier")
+
+st.sidebar.success("Hyperparameter Tuning : GridSearchCV")
+
+st.sidebar.success("Dataset : Mushroom Classification")
 
 # ------------------------------------------------
 # Feature Dictionaries
@@ -76,7 +88,7 @@ cap_color_dict = {
 }
 
 bruises_dict = {
-    "Bruises": "t",
+    "Bruises Present": "t",
     "No Bruises": "f"
 }
 
@@ -87,7 +99,7 @@ odor_dict = {
     "Fishy": "y",
     "Foul": "f",
     "Musty": "m",
-    "None": "n",
+    "No Odor": "n",
     "Pungent": "p",
     "Spicy": "s"
 }
@@ -132,7 +144,7 @@ with col3:
     )
 
 # ------------------------------------------------
-# Convert Inputs to Dataset Values
+# Convert Inputs to Dataset Codes
 # ------------------------------------------------
 
 cap_shape_value = cap_shape_dict[cap_shape]
@@ -151,6 +163,8 @@ odor_value = odor_dict[odor]
 
 if st.button("🎯 Predict Mushroom Type"):
 
+    # Create Input DataFrame
+
     input_df = pd.DataFrame({
         "cap-shape": [cap_shape_value],
         "cap-surface": [cap_surface_value],
@@ -159,28 +173,58 @@ if st.button("🎯 Predict Mushroom Type"):
         "odor": [odor_value]
     })
 
+    # --------------------------------------------
     # Label Encoding
-    for col in input_df.columns:
-        input_df[col] = encoders[col].transform(input_df[col])
+    # --------------------------------------------
 
+    for col in input_df.columns:
+
+        value = input_df[col].iloc[0]
+
+        encoded_value = encoders[col].transform([value])[0]
+
+        input_df[col] = encoded_value
+
+    # --------------------------------------------
     # Prediction
+    # --------------------------------------------
+
     prediction = model.predict(input_df)
 
-    # Result
+    prediction_proba = model.predict_proba(input_df)
+
+    edible_prob = prediction_proba[0][0] * 100
+
+    poisonous_prob = prediction_proba[0][1] * 100
+
+    # --------------------------------------------
+    # Display Result
+    # --------------------------------------------
+
     if prediction[0] == 1:
+
         result = "☠️ Poisonous Mushroom"
+
         message = "⚠️ This mushroom is poisonous. Do NOT consume it."
+
+        probability = poisonous_prob
+
     else:
+
         result = "✅ Edible Mushroom"
+
         message = "🍽️ This mushroom is edible."
 
-    # Display Result
+        probability = edible_prob
+
     st.markdown(
         f"""
         <div class='prediction-box'>
             {result}
             <br><br>
             <span>{message}</span>
+            <br><br>
+            Prediction Confidence : {probability:.2f}%
         </div>
         """,
         unsafe_allow_html=True
@@ -196,53 +240,53 @@ st.subheader("📖 Feature Meanings")
 
 with st.expander("Cap Shape"):
     st.write("""
-    - Bell
-    - Conical
-    - Convex
-    - Flat
-    - Knobbed
-    - Sunken
+    • Bell  
+    • Conical  
+    • Convex  
+    • Flat  
+    • Knobbed  
+    • Sunken
     """)
 
 with st.expander("Cap Surface"):
     st.write("""
-    - Fibrous
-    - Grooves
-    - Scaly
-    - Smooth
+    • Fibrous  
+    • Grooves  
+    • Scaly  
+    • Smooth
     """)
 
 with st.expander("Cap Color"):
     st.write("""
-    - Brown
-    - Buff
-    - Cinnamon
-    - Gray
-    - Green
-    - Pink
-    - Purple
-    - Red
-    - White
-    - Yellow
+    • Brown  
+    • Buff  
+    • Cinnamon  
+    • Gray  
+    • Green  
+    • Pink  
+    • Purple  
+    • Red  
+    • White  
+    • Yellow
     """)
 
 with st.expander("Bruises"):
     st.write("""
-    - Bruises Present
-    - No Bruises
+    • Bruises Present  
+    • No Bruises
     """)
 
 with st.expander("Odor"):
     st.write("""
-    - Almond
-    - Anise
-    - Creosote
-    - Fishy
-    - Foul
-    - Musty
-    - None
-    - Pungent
-    - Spicy
+    • Almond  
+    • Anise  
+    • Creosote  
+    • Fishy  
+    • Foul  
+    • Musty  
+    • No Odor  
+    • Pungent  
+    • Spicy
     """)
 
 # ------------------------------------------------
@@ -253,7 +297,7 @@ st.markdown(
     """
     <hr>
     <center>
-    <h4>✨ Built using Streamlit & Scikit-Learn ✨</h4>
+    <h4>✨ Built using Streamlit, Scikit-Learn & GridSearchCV ✨</h4>
     </center>
     """,
     unsafe_allow_html=True
